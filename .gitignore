@@ -18,7 +18,7 @@
 *.userprefs
 *.usertasks
 
-vendor@
+vendor
 
 #Mono Project Files
 *.pidb
