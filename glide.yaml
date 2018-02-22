@@ -1,0 +1,5 @@
+package: github.com/AmFlint/taco-api-go
+import:
+- package: github.com/gorilla/mux
+  version: v1.6.1
+- package: gopkg.in/mgo.v2
