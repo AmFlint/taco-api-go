@@ -27,13 +27,14 @@ In order to run the application, you have multiple choices:
 - For development purposes, you will probably want to use
 
 ```bash
-go run main.go
+# Compile, import all go files in tree and run binaries
+go run *.go
 ```
 
 - For deployment purposes, use the command:
 ```bash
 # Build the application -> Binaries to execute under the file 'taco'
-go build main.go -o taco
+go build . -o taco
 
 # And then, just run the binaries
 ./taco
