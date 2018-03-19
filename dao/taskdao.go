@@ -1,0 +1,52 @@
+package dao
+
+import (
+	"gopkg.in/mgo.v2"
+	"github.com/AmFlint/taco-api-go/models"
+	"gopkg.in/mgo.v2/bson"
+)
+
+type TaskDAO struct {
+	Database *mgo.Database
+}
+
+const (
+	COLLECTION = "tasks"
+)
+
+func prepareQuery(db *mgo.Database) *mgo.Collection {
+	return db.C(COLLECTION)
+}
+
+func (t *TaskDAO) SetDb(db *mgo.Database) {
+	t.Database = db
+}
+
+// Find All tasks from Database
+func (t *TaskDAO) FindAll() ([]models.Task, error) {
+	var tasks []models.Task
+	err := prepareQuery(t.Database).Find(bson.M{}).All(&tasks)
+	return  tasks, err
+}
+
+func (t *TaskDAO) FindById(taskId string) (models.Task, error) {
+	var task models.Task
+	err := prepareQuery(t.Database).FindId(bson.ObjectIdHex(taskId)).One(&task)
+
+	return task, err
+}
+
+func (t *TaskDAO) Delete(task *models.Task) error {
+	err := prepareQuery(t.Database).Remove(&task)
+	return err
+}
+
+func (t *TaskDAO) Update(task *models.Task) error {
+	err := prepareQuery(t.Database).UpdateId(task.TaskId, &task)
+	return err
+}
+
+func (t *TaskDAO) Insert(task *models.Task) error {
+	err := prepareQuery(t.Database).Insert(&task)
+	return err
+}
