@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gorilla/handlers"
 	"os"
+	"github.com/AmFlint/taco-api-go/routes"
 )
 
 type App struct {
@@ -31,14 +32,14 @@ func (a *App) Initialize(user, password, dbName, dbHost, dbPort string) {
 	// Add Mongo Host:Port to connection url
 	dbUrl += fmt.Sprintf("%s:%s", dbHost, dbPort)
 
-	fmt.Println(dbUrl)
-
 	var err error
 	// Connect to MongoDb server and retrieve Session Instance
 	a.DbSession, err = mgo.Dial(dbUrl)
 	if err != nil {
 		panic(err)
 	}
+
+	log.Print("Connection to Database established with success !")
 
 	// Initialize Mux Router and assign it to application Structure
 	a.Router = mux.NewRouter()
@@ -57,6 +58,7 @@ func (a *App) Run(addr string) {
 	// Routing policies takes place in this function
 	a.setRoutes()
 
+	log.Printf("Server listening on port%s", addr)
 	// Listen on port defined in addr parameter, and serve Application via Mux Router
 	// Configure Http server to log every access/error logs to Stdout
 	if err := http.ListenAndServe(addr, handlers.LoggingHandler( os.Stdout, a.Router)); err != nil {
@@ -83,4 +85,7 @@ func (a *App) setRoutes() {
 	})
 
 	// ---- Tasks Management Endpoints ---- //
+	taskRouter := a.Router.PathPrefix("/boards/{boardId}/tasks").Subrouter()
+
+	taskRouter.HandleFunc("/", routes.TaskIndexAction).Methods("GET")
 }
