@@ -1,8 +1,17 @@
-hash: e095b54f6140a084c6e7ca5b8c951f826e276c96ab3315f0ef01356bd0035f32
-updated: 2018-02-22T23:35:28.160955139+01:00
+hash: 9204f7d36087eb318e53e34aff92fc3874ba824f13ef3b1ab8378f2a0ab9598e
+updated: 2018-03-19T16:24:41.74673615+01:00
 imports:
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/handlers
+  version: 90663712d74cb411cbef281bc1e08c19d1a76145
 - name: github.com/gorilla/mux
   version: 53c1911da2b537f792e7cafcb446b05ffe33b996
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
 testImports: []
