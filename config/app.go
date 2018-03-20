@@ -1,12 +1,11 @@
-package main
+package config
 
 import (
-	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
-	"net/http"
-	"log"
-	"io"
 	"fmt"
+	"log"
+	"github.com/gorilla/mux"
+	"net/http"
 	"github.com/gorilla/handlers"
 	"os"
 	"github.com/AmFlint/taco-api-go/routes"
@@ -19,6 +18,17 @@ type App struct {
 
 // Variable to contain the database name for later use when Session connects to Database
 var databaseName string
+var a App
+
+func NewApp(user, password, dbName, dbHost, dbPort string) App {
+	a = App{}
+	a.Initialize(user, password, dbName, dbHost, dbPort)
+	return a
+}
+
+func GetApp() App {
+	return a
+}
 
 // Initialize Application Structure: Configure Database Connection, save dbName for later uses and create Router
 func (a *App) Initialize(user, password, dbName, dbHost, dbPort string) {
@@ -43,6 +53,8 @@ func (a *App) Initialize(user, password, dbName, dbHost, dbPort string) {
 
 	// Initialize Mux Router and assign it to application Structure
 	a.Router = mux.NewRouter()
+	// Routing policies takes place in this function
+	a.initializeRoutes()
 }
 
 // Retrieve Database connection from Application's Mongo Session
@@ -55,9 +67,6 @@ func (a *App) Run(addr string) {
 	// Close Database connection at the end of Application Runtime
 	defer a.DbSession.Close()
 
-	// Routing policies takes place in this function
-	a.setRoutes()
-
 	log.Printf("Server listening on port%s", addr)
 	// Listen on port defined in addr parameter, and serve Application via Mux Router
 	// Configure Http server to log every access/error logs to Stdout
@@ -67,25 +76,14 @@ func (a *App) Run(addr string) {
 }
 
 // Function in charge of setting up Application Routes
-func (a *App) setRoutes() {
+func (a *App) initializeRoutes() {
 	// ---- General Endpoints ---- //
 
 	// Health Endpoint, check whether service is up or down
-	a.Router.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {
-		defer request.Body.Close()
-		writer.WriteHeader(http.StatusOK)
-		writer.Header().Set("Content-type", "application/json")
-		io.WriteString(writer, `{"alive": true}`)
-	})
-
-	a.Router.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		hello := []byte("Hello, World")
-		w.Write(hello)
-	})
+	a.Router.HandleFunc("/health", routes.HealthIndexHandler).Methods("GET")
 
 	// ---- Tasks Management Endpoints ---- //
-	taskRouter := a.Router.PathPrefix("/boards/{boardId}/tasks").Subrouter()
+	//taskRouter := a.Router.PathPrefix("/boards/{boardId}/tasks").Subrouter()
 
-	taskRouter.HandleFunc("/", routes.TaskIndexAction).Methods("GET")
+	//taskRouter.HandleFunc("/", routes.TaskIndexAction).Methods("GET")
 }
