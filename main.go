@@ -14,7 +14,7 @@ func main() {
 		helpers.GetEnv("APP_PASSWORD", ""),
 		helpers.GetEnv("APP_DB_NAME", "taco"),
 		helpers.GetEnv("APP_DB_HOST", "localhost"),
-		helpers.GetEnv("APP_DB_PORT", "27017"))
+		helpers.GetEnv("APP@_DB_PORT", "27017"))
 
 	// Get Port from Environment Variables and start server (Listen on given Port)
 	port := fmt.Sprintf(":%s", helpers.GetEnv("APP_PORT", "8080"))
