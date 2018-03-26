@@ -14,6 +14,15 @@ const (
 	COLLECTION = "tasks"
 )
 
+// Create a TaskDAO structure and set DAO's database, return new struct
+func NewTaskDAO(db *mgo.Database) TaskDAO {
+	t := TaskDAO{}
+	t.SetDb(db)
+
+	return t
+}
+
+// Prepare base queries by Initiating connection to the Collection
 func prepareQuery(db *mgo.Database) *mgo.Collection {
 	return db.C(COLLECTION)
 }
