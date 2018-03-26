@@ -13,10 +13,8 @@ func TestHealthCheck(t *testing.T) {
 	// Execute Request and retrieve response
 	response := utils.ExecuteRequest(req)
 
-	t.Log(response.Code, response.Body.String())
-
 	// Check that Response Code is 200 | OK
 	utils.CheckResponseCode(t, response.Code, http.StatusOK)
 	// Assert that response body is {"alive": true}
-	utils.AssertResponseStringIs(t, response.Body.String(), `{"alive": true}`)
+	utils.AssertStringEqualsTo(t, response.Body.String(), `{"alive": true}`)
 }

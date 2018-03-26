@@ -23,8 +23,26 @@ func CheckResponseCode(t *testing.T, got, expected int) {
 	}
 }
 
-func AssertResponseStringIs(t *testing.T, got, expected string) {
+func AssertStringEqualsTo(t *testing.T, got, expected string) {
 	if got != expected {
-		t.Errorf("[Error], Expected Response body to be: %s, got: %s", expected, got)
+		t.Errorf("[Error], Expected body to be: %s, got: %s", expected, got)
+	}
+}
+
+func AssertFloatEqualsTo(t *testing.T, got, expected float64) {
+	if got != expected {
+		t.Errorf("[Error], Expected value to be: %v, got: %v", expected, got)
+	}
+}
+
+func AssertIntEqualsTo(t *testing.T, got, expected int) {
+	if got != expected {
+		t.Errorf("[Error], Expected integer value to be: %v, got: %v", expected, got)
+	}
+}
+
+func AssertMapHasKey(t *testing.T, m map[string]interface{}, key string) {
+	if m[key] == nil {
+		t.Errorf("[Error], Expected map to have key %s, but does not exist", key)
 	}
 }

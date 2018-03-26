@@ -5,14 +5,15 @@ import (
 	"os"
 	"github.com/AmFlint/taco-api-go/config"
 	"github.com/AmFlint/taco-api-go/helpers"
+	"github.com/AmFlint/taco-api-go/config/database"
 )
 
 var a config.App
 
 // Clear Database Collections
-func clearDatabase(a config.App) {
+func clearDatabase() {
 	// Retrieve Database Connection from main.Application Session
-	db := a.Connect()
+	db := database.GetDatabaseConnection()
 	// Clear Database Content
 	db.DropDatabase()
 }
@@ -20,7 +21,7 @@ func clearDatabase(a config.App) {
 func TestMain(m *testing.M) {
 	// Create main.Application Struct
 	// Initialize main.Application with database configuration
-	a := config.NewApp(
+	config.NewApp(
 		helpers.GetEnv("main.App_USERNAME", ""),
 		helpers.GetEnv("main.App_PASSWORD", ""),
 		helpers.GetEnv("main.App_DB_NAME", "taco"),
@@ -28,15 +29,15 @@ func TestMain(m *testing.M) {
 		helpers.GetEnv("main.App_DB_PORT", "27017"))
 
 	// Clear database collections
-	clearDatabase(a)
+	clearDatabase()
 
 	// Run following tests
 	code := m.Run()
 
 	// Clear Database after use
-	clearDatabase(a)
+	clearDatabase()
 
-	defer a.DbSession.Close()
+	defer database.CloseSession()
 
 	// Exit testing program with runtime exit code
 	os.Exit(code)
