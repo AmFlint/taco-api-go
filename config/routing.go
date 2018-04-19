@@ -14,4 +14,5 @@ func (a *App) initializeRoutes() {
 
 	taskRouter.HandleFunc("", routes.TaskIndexHandler).Methods("GET")
 	taskRouter.HandleFunc("", routes.TaskCreateHandler).Methods("POST")
+	taskRouter.HandleFunc("/{taskId}", routes.TaskViewHandler).Methods("GET")
 }
