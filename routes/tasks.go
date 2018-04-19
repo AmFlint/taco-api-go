@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/AmFlint/taco-api-go/models"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/gorilla/mux"
 )
 
 func TaskIndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +28,26 @@ func TaskIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TaskViewHandler(w http.ResponseWriter, r *http.Request) {
+	//defer r.Body.Close()
+	vars := mux.Vars(r)
+	taskIdVar := vars["taskId"]
 
+	if isObjectId := bson.IsObjectIdHex(taskIdVar); !isObjectId {
+		helpers.RespondWithError(w, http.StatusBadRequest, "Parameter task id is not a valid ObjectID")
+		return
+	}
+
+	taskId := bson.ObjectIdHex(taskIdVar)
+
+	taskDAO := dao.NewTaskDAO(database.GetDatabaseConnection())
+	task, err := taskDAO.FindById(taskId)
+	if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, "Task does not exist")
+		return
+	}
+
+	helpers.RespondWithJson(w, http.StatusOK, task)
+	return
 }
 
 // ---- Endpoint to create a Task ---- //
