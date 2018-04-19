@@ -22,11 +22,11 @@ func TestMain(m *testing.M) {
 	// Create main.Application Struct
 	// Initialize main.Application with database configuration
 	config.NewApp(
-		helpers.GetEnv("main.App_USERNAME", ""),
-		helpers.GetEnv("main.App_PASSWORD", ""),
-		helpers.GetEnv("main.App_DB_NAME", "taco"),
-		helpers.GetEnv("main.App_DB_HOST", "localhost"),
-		helpers.GetEnv("main.App_DB_PORT", "27017"))
+		helpers.GetEnv("APP_USERNAME", ""),
+		helpers.GetEnv("APP_PASSWORD", ""),
+		helpers.GetEnv("APP_DB_NAME", "taco"),
+		helpers.GetEnv("APP_DB_HOST", "localhost"),
+		helpers.GetEnv("APP_DB_PORT", "27017"))
 
 	// Clear database collections
 	clearDatabase()
