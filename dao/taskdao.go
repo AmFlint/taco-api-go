@@ -38,9 +38,9 @@ func (t *TaskDAO) FindAll() ([]models.Task, error) {
 	return  tasks, err
 }
 
-func (t *TaskDAO) FindById(taskId string) (models.Task, error) {
+func (t *TaskDAO) FindById(taskId bson.ObjectId) (models.Task, error) {
 	var task models.Task
-	err := prepareQuery(t.Database).FindId(bson.ObjectIdHex(taskId)).One(&task)
+	err := prepareQuery(t.Database).FindId(taskId).One(&task)
 
 	return task, err
 }
