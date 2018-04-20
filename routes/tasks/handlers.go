@@ -1,4 +1,5 @@
-package routes
+package tasks
+
 
 import (
 	"net/http"
@@ -12,6 +13,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
+//TODO: Create Middleware for initiating TaskDAO
+//TODO: Create Middleware for vars["taskId"]
+//TODO: Create Error message constant for Not Found
 func TaskIndexHandler(w http.ResponseWriter, r *http.Request) {
 	taskDao := dao.NewTaskDAO(database.GetDatabaseConnection())
 	tasks, err := taskDao.FindAll()
@@ -92,7 +96,29 @@ func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 // Http Method DELETE on Task resource: Delete a Task
 func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r);
 
+	taskIdVar := vars["taskId"]
+
+	if isObjectId := bson.IsObjectIdHex(taskIdVar); !isObjectId {
+		helpers.RespondWithError(w, http.StatusBadRequest, "Parameter Task is not a valid object id")
+		log.Print("[ERR] Parameter :taskId is not a valid ObjectId in DELETE tasks")
+		return
+	}
+
+	taskId := bson.ObjectIdHex(taskIdVar)
+	taskDAO := dao.NewTaskDAO(database.GetDatabaseConnection())
+
+	// Get Task From Database
+	task, err := taskDAO.FindByIdAndDelete(taskId)
+	if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, "Task Not Found")
+		log.Print("[ERR] Task does not exist in DELETE task")
+		return
+	}
+
+	helpers.RespondWithJson(w, http.StatusOK, task)
+	return
 }
 
 // Http Method PUT on Task Resource: Update a Task
