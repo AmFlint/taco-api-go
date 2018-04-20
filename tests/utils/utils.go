@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/AmFlint/taco-api-go/config"
+	"reflect"
 )
 
 // Execute Http Request
@@ -44,5 +45,12 @@ func AssertIntEqualsTo(t *testing.T, got, expected int) {
 func AssertMapHasKey(t *testing.T, m map[string]interface{}, key string) {
 	if m[key] == nil {
 		t.Errorf("[Error], Expected map to have key %s, but does not exist", key)
+	}
+}
+
+// Assert that interface is not Empty
+func AssertNotEmpty(t *testing.T, got interface{}) {
+	if reflect.DeepEqual(got, reflect.Zero(reflect.TypeOf(got)).Interface()) {
+		t.Errorf("[Error] Expected interface to be non-empty, but is empty")
 	}
 }
