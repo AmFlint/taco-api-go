@@ -1,6 +1,9 @@
 package config
 
-import "github.com/AmFlint/taco-api-go/routes"
+import (
+	"github.com/AmFlint/taco-api-go/routes"
+	"github.com/AmFlint/taco-api-go/routes/tasks"
+)
 
 // Function in charge of setting up Application Routes
 func (a *App) initializeRoutes() {
@@ -12,7 +15,5 @@ func (a *App) initializeRoutes() {
 	// ---- Tasks Management Endpoints ---- //
 	taskRouter := a.Router.PathPrefix("/boards/{boardId}/tasks").Subrouter()
 
-	taskRouter.HandleFunc("", routes.TaskIndexHandler).Methods("GET")
-	taskRouter.HandleFunc("", routes.TaskCreateHandler).Methods("POST")
-	taskRouter.HandleFunc("/{taskId}", routes.TaskViewHandler).Methods("GET")
+	tasks.InitRoutes(taskRouter)
 }
