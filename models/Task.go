@@ -4,14 +4,14 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/AmFlint/taco-api-go/validators"
 )
-
+//TODO:rename Status to Done bool default false
 // Task Structure, represents Task Document from Database
 type Task struct {
 	TaskId      bson.ObjectId `bson:"_id" json:"taskId"`
-	Title       string        `bson:"title" json:"title"`
-	Description string        `bson:"description" json:"description"`
+	Title       string        `bson:"title" json:"title" onCreate:"nonzero,max=200"`
+	Description string        `bson:"description" json:"description" onCreate:"max=500"`
 	Status      string        `bson:"status" json:"status"`
-	Points      float64           `bson:"points" json:"points"`
+	Points      float64       `bson:"points" json:"points" onCreate:"min=0,max=100" onUpdate:"min=0,max=100"`
 }
 
 const (
