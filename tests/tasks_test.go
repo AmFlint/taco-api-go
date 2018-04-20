@@ -36,6 +36,14 @@ func getBaseUrl(boardId bson.ObjectId) string {
 	return fmt.Sprintf("/boards/%s/tasks", boardId.Hex())
 }
 
+func getTaskUrl(boardId bson.ObjectId, taskId bson.ObjectId) string {
+	return fmt.Sprintf("%s/%s", getBaseUrl(boardId), taskId.Hex())
+}
+
+func getInvalidTaskUrl(boardId bson.ObjectId) string {
+	return fmt.Sprintf("%s/%s", getBaseUrl(boardId), "0")
+}
+
 // -- Get Json encoded (stringified) Struct for invalid task -> Wrong Points entry -- //
 func getTaskInvalidPointType() []byte {
 	task := taskInvalidPointsType{
@@ -173,11 +181,14 @@ func TestViewTaskEndpoint(t *testing.T) {
 		if err != nil {
 			t.Error("[Error] Could not Unmarshal HTTP Response Body")
 		}
+
+		utils.AssertMapHasKey(t, m, "title")
+		utils.AssertStringEqualsTo(t, m["title"].(string), TESTING__TASK_TITLE)
+		utils.AssertStringEqualsTo(t, m["taskId"].(string), testedTaskId.Hex())
 	})
 
 	t.Run("View non existing task with valid object id", func(t *testing.T) {
-		taskUrl := fmt.Sprintf("%s/%v/", getBaseUrl(bson.NewObjectId()), bson.NewObjectId())
-
+		taskUrl := getTaskUrl(bson.NewObjectId(), bson.NewObjectId())
 		req, _ := http.NewRequest("GET", taskUrl, nil)
 
 		response := utils.ExecuteRequest(req)
@@ -188,9 +199,49 @@ func TestViewTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("view task with invalid object id", func(t *testing.T) {
-		taskUrl := fmt.Sprintf("%s/%s", getBaseUrl(bson.NewObjectId()), "2")
+		taskUrl := getInvalidTaskUrl(bson.NewObjectId())
 
 		req, _ := http.NewRequest("GET", taskUrl, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+}
+
+func TestDeleteTaskEndpoint(t *testing.T) {
+	// Delete existing Resource with valid Object Id
+	t.Run("Delete Existing Task with Valid ObjectId", func(t *testing.T) {
+		taskUrl := getTaskUrl(bson.NewObjectId(), testedTaskId)
+
+		req, _ := http.NewRequest("DELETE", taskUrl, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusOK)
+
+		var m map[string]interface{}
+
+		err := json.Unmarshal(response.Body.Bytes(), &m)
+		if err != nil {
+			t.Fatal("Could not unMarshal response JSON")
+		}
+
+		utils.AssertMapHasKey(t, m, "taskId")
+		utils.AssertStringEqualsTo(t, m["title"].(string), TESTING__TASK_TITLE)
+	})
+
+	t.Run("Delete nonexisting Task with Valid ObjectId", func(t *testing.T) {
+		taskUrl := getTaskUrl(bson.NewObjectId(), testedTaskId)
+
+		req, _ := http.NewRequest("DELETE", taskUrl, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusNotFound)
+	})
+
+	t.Run("Delete Task with invalid ObjectId", func(t *testing.T) {
+		taskUrl := getInvalidTaskUrl(bson.NewObjectId())
+
+		req, _ := http.NewRequest("DELETE", taskUrl, nil)
 		response := utils.ExecuteRequest(req)
 
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
