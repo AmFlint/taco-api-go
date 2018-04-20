@@ -11,6 +11,7 @@ import (
 	"github.com/AmFlint/taco-api-go/models"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gorilla/mux"
+	validator2 "gopkg.in/validator.v2"
 )
 
 //TODO: Create Middleware for initiating TaskDAO
@@ -58,28 +59,17 @@ func TaskViewHandler(w http.ResponseWriter, r *http.Request) {
 func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
 	var task models.Task
 	decoder := json.NewDecoder(r.Body)
-	taskInput := make(map[string]interface{})
 
-	if err := decoder.Decode(&taskInput); err != nil {
-		helpers.RespondWithError(w, http.StatusBadRequest, helpers.ERROR__INVALID_PLAYLOAD)
+	if err := decoder.Decode(&task); err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	taskInput["status"] = models.GetDefaultTaskStatus()
-	// Validate User Input for Task Creation
-	validationErrors := models.ValidateTask(taskInput)
-
-	// If errors were fount during validation, send error messages and bad request status code
-	if len(validationErrors) != 0 {
-		helpers.RespondWithErrors(w, http.StatusBadRequest, validationErrors)
-		return
-	}
-
-	validInput, _ := json.Marshal(taskInput)
-
-	if err := json.Unmarshal(validInput, &task); err != nil {
-		log.Print(task)
-		helpers.RespondWithError(w, http.StatusBadRequest, helpers.ERROR__INVALID_PLAYLOAD)
+	validator := validator2.NewValidator()
+	validator.SetTag("onCreate")
+	if errs := validator.Validate(task); errs != nil {
+		log.Printf("Validation failed on task %s, got error: %s", task, errs.Error())
+		helpers.RespondWithError(w, http.StatusBadRequest, errs.Error())
 		return
 	}
 
