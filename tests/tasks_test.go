@@ -9,13 +9,14 @@ import (
 	"github.com/AmFlint/taco-api-go/tests/utils"
 	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
+	"fmt"
 )
 
 /* -----------------------------------------------------------------
    ----------------------- Configuration ---------------------------
    ----------------------------------------------------------------- */
 
-   // -- Structure for Invalid Tasks due to invalid type for Points entry -- //
+// -- Structure for Invalid Tasks due to invalid type for Points entry -- //
 type taskInvalidPointsType struct {
 	Title       string `bson:"title" json:"title"`
 	Description string `bson:"description" json:"description"`
@@ -30,6 +31,10 @@ const (
 	TESTING__TASK_DESCRIPTION = "Testing description"
 	TESTING__TASK_POINTS = 9
 )
+
+func getBaseUrl(boardId bson.ObjectId) string {
+	return fmt.Sprintf("/boards/%s/tasks", boardId.Hex())
+}
 
 // -- Get Json encoded (stringified) Struct for invalid task -> Wrong Points entry -- //
 func getTaskInvalidPointType() []byte {
@@ -141,5 +146,53 @@ func TestCreateTaskEndpoint(t *testing.T) {
 			t.Error("[Error] Could not Unmarshal HTTP Response Body")
 		}
 		utils.AssertMapHasKey(t, m, "errors")
+	})
+}
+
+/* --------------------------------
+   ----- View Task Endpoint ----
+   -------------------------------- */
+
+func TestViewTaskEndpoint(t *testing.T) {
+	// Testing view existing Task with Valid ObjectID
+	t.Run("View existing task with valid object id", func(t *testing.T) {
+		//taskId := utils.TaskCreate(getTaskValid(), t)
+		// TODO: change URL, add "/" to every url
+		taskUrl := fmt.Sprintf("%s/%s", getBaseUrl(bson.NewObjectId()), testedTaskId.Hex())
+
+		req, _ := http.NewRequest("GET", taskUrl, nil)
+
+		// Execute request
+		response := utils.ExecuteRequest(req)
+
+		// Check that response code == 200
+		utils.CheckResponseCode(t, response.Code, http.StatusOK)
+
+		var m map[string]interface{}
+		err := json.Unmarshal(response.Body.Bytes(), &m)
+		if err != nil {
+			t.Error("[Error] Could not Unmarshal HTTP Response Body")
+		}
+	})
+
+	t.Run("View non existing task with valid object id", func(t *testing.T) {
+		taskUrl := fmt.Sprintf("%s/%v/", getBaseUrl(bson.NewObjectId()), bson.NewObjectId())
+
+		req, _ := http.NewRequest("GET", taskUrl, nil)
+
+		response := utils.ExecuteRequest(req)
+
+		// Check server answers with code 404 not found
+		utils.CheckResponseCode(t, response.Code, http.StatusNotFound)
+		// TODO: Verify server response contains error message: create error response Struct
+	})
+
+	t.Run("view task with invalid object id", func(t *testing.T) {
+		taskUrl := fmt.Sprintf("%s/%s", getBaseUrl(bson.NewObjectId()), "2")
+
+		req, _ := http.NewRequest("GET", taskUrl, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
 	})
 }

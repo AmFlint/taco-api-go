@@ -95,7 +95,6 @@ func validatePoints(errors *[]string, p interface{}) {
 	if validators.NotEmpty(p, TASK__DESCRIPTION) != nil {
 		return
 	}
-
 	typeErr := validators.IsFloat(p, TASK__POINTS)
 	validators.CheckValidationErrors(typeErr, errors)
 	// Leave function if points is not a float as next validations would cause a panic
