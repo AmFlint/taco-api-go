@@ -59,3 +59,16 @@ func (t *TaskDAO) Insert(task *models.Task) error {
 	err := prepareQuery(t.Database).Insert(&task)
 	return err
 }
+
+// Find a Task by ID, if error return empty task with error, then delete task and return deleted task + error
+func (t *TaskDAO) FindByIdAndDelete(taskId bson.ObjectId) (models.Task, error) {
+	var task models.Task
+	err := prepareQuery(t.Database).FindId(taskId).One(&task)
+
+	if err != nil {
+		return task, err
+	}
+	err = t.Delete(&task)
+	// Return deleted task and Error
+	return task, err
+}
