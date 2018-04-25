@@ -18,4 +18,7 @@ func InitRoutes(taskRouter *mux.Router) {
 	// ---- Task Deletion ---- //
 	taskRouter.HandleFunc("/{taskId}", TaskDeleteHandler).Methods("DELETE")
 	taskRouter.HandleFunc("/{taskId}/", TaskDeleteHandler).Methods("DELETE")
+	// ---- Task Update ---- //
+	taskRouter.HandleFunc("/{taskId}", TaskUpdateHandler).Methods("PUT")
+	taskRouter.HandleFunc("/{taskId}/", TaskUpdateHandler).Methods("PUT")
 }

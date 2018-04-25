@@ -99,7 +99,6 @@ func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	taskId := bson.ObjectIdHex(taskIdVar)
 	taskDAO := dao.NewTaskDAO(database.GetDatabaseConnection())
 
-	// Get Task From Database
 	task, err := taskDAO.FindByIdAndDelete(taskId)
 	if err != nil {
 		helpers.RespondWithError(w, http.StatusNotFound, "Task Not Found")
@@ -113,5 +112,57 @@ func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 // Http Method PUT on Task Resource: Update a Task
 func TaskUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	var task models.Task
 
+	vars := mux.Vars(r)
+	taskIdHex := vars["taskId"]
+
+	// Check TaskId
+	if isObjectId := bson.IsObjectIdHex(taskIdHex);  !isObjectId {
+		helpers.RespondWithError(w, http.StatusBadRequest, "Invalid Task Id")
+		return
+	}
+
+	taskId := bson.ObjectIdHex(taskIdHex)
+	taskDao := dao.NewTaskDAO(database.GetDatabaseConnection())
+
+	// Retrieve task from database
+	mainTask, err := taskDao.FindById(taskId)
+	if err != nil {
+		helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	// Parse request body
+	var body map[string]interface{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&body); err != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	bodyJson := helpers.JsonEncode(body)
+	if err := json.Unmarshal(bodyJson, &task); err != nil {
+		log.Print(err.Error())
+		helpers.RespondWithError(w, http.StatusInternalServerError, "Can not unmarshal body")
+		return
+	}
+
+	// Hydrate Task from request's attributes
+	mainTask.HydrateFromMap(body)
+
+	validator := validator2.NewValidator()
+	validator.SetTag("onCreate")
+
+	if errs := validator.Validate(mainTask); errs != nil {
+		helpers.RespondWithError(w, http.StatusBadRequest, errs.Error())
+		return
+	}
+
+	if err := taskDao.Update(&mainTask); err != nil {
+		helpers.RespondWithError(w, http.StatusInternalServerError, "Server Error during task Update")
+		return
+	}
+
+	helpers.RespondWithJson(w, http.StatusOK, mainTask)
 }
