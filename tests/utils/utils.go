@@ -7,6 +7,7 @@ import (
 
 	"github.com/AmFlint/taco-api-go/config"
 	"reflect"
+	"fmt"
 )
 
 // Execute Http Request
@@ -23,11 +24,21 @@ func CheckResponseCode(t *testing.T, got, expected int) {
 		t.Errorf("Got Response Code %v, expected: %v", got, expected)
 	}
 }
+// TODO: Use func assertEquals in all AssertEquals methods
+func assertEquals(t *testing.T, got, expected interface{}, err string) {
+	if got != expected {
+		t.Error(err)
+	}
+}
 
 func AssertStringEqualsTo(t *testing.T, got, expected string) {
 	if got != expected {
 		t.Errorf("[Error], Expected body to be: %s, got: %s", expected, got)
 	}
+}
+
+func AssertBoolEqualsTo(t *testing.T, got, expected bool) {
+	assertEquals(t, got, expected, fmt.Sprintf("[Error], Expected given boolean to be %v, got %v", expected, got))
 }
 
 func AssertFloatEqualsTo(t *testing.T, got, expected float64) {
