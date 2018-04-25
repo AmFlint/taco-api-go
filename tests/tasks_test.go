@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
 	"fmt"
+	"log"
 )
 
 /* -----------------------------------------------------------------
@@ -30,18 +31,22 @@ const (
 	TESTING__TASK_TITLE = "Testing title"
 	TESTING__TASK_DESCRIPTION = "Testing description"
 	TESTING__TASK_POINTS = 9
+	TESTING__UPDATED_TITLE = "Updating tested task title"
+	TESTING__UPDATED_DESCRIPTION = "Updated tested task description"
+	TESTING__UPDATED_STATUS = true
+	TESTING__UPDATED_POINTS = 20
 )
 
-func getBaseUrl(boardId bson.ObjectId) string {
-	return fmt.Sprintf("/boards/%s/tasks", boardId.Hex())
+func getBaseUrl(boardId bson.ObjectId, listId bson.ObjectId) string {
+	return fmt.Sprintf("/boards/%s/lists/%s/tasks", boardId.Hex(), listId.Hex())
 }
 
-func getTaskUrl(boardId bson.ObjectId, taskId bson.ObjectId) string {
-	return fmt.Sprintf("%s/%s", getBaseUrl(boardId), taskId.Hex())
+func getTaskUrl(boardId, listId, taskId bson.ObjectId) string {
+	return fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), taskId.Hex())
 }
 
-func getInvalidTaskUrl(boardId bson.ObjectId) string {
-	return fmt.Sprintf("%s/%s", getBaseUrl(boardId), "0")
+func getInvalidTaskUrl(boardId, listId bson.ObjectId) string {
+	return fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), "0")
 }
 
 // -- Get Json encoded (stringified) Struct for invalid task -> Wrong Points entry -- //
@@ -82,6 +87,33 @@ func getTaskValid() []byte {
 	return helpers.JsonEncode(task)
 }
 
+//
+func getTaskUpdateValidNoDescription() []byte {
+	task := make(map[string]interface{})
+	task["title"] = TESTING__UPDATED_TITLE
+	task["status"] = TESTING__UPDATED_STATUS
+	task["points"] = TESTING__UPDATED_POINTS
+	return helpers.JsonEncode(task)
+}
+
+func getTaskUpdateValidDescription() []byte {
+	task := make(map[string]interface{})
+	task["description"] = TESTING__UPDATED_DESCRIPTION
+	return helpers.JsonEncode(task)
+}
+
+func getTaskUpdateInvalidPoints() []byte {
+	task := make(map[string]interface{})
+	task["points"] = -1
+	return helpers.JsonEncode(task)
+}
+
+func getTaskUpdateInvalidTitle() []byte {
+	task := make(map[string]interface{})
+	task["title"] = ""
+	return helpers.JsonEncode(task)
+}
+
 /* ----------------------- Local Test Helpers ------------------------ */
 
 func checkResponseCodeAndErrorMessage(t *testing.T, code int, body []byte) {
@@ -98,23 +130,24 @@ func checkResponseCodeAndErrorMessage(t *testing.T, code int, body []byte) {
    ------------------------ TEST SUITE -----------------------------
    ----------------------------------------------------------------- */
 
-/* --------------------------------
-   ----- Create Tasks Endpoint ----
-   -------------------------------- */
-
 var (
-	testedTaskId, boardId bson.ObjectId
+	testedTaskId, boardId, listId bson.ObjectId
 )
 
 func init() {
 	boardId = bson.NewObjectId()
+	listId = bson.NewObjectId()
 }
+
+/* --------------------------------
+   ----- Create Tasks Endpoint ----
+   -------------------------------- */
 
 func TestCreateTaskEndpoint(t *testing.T) {
 	// -- Test to create a task with valid body -> Should Create task -> Return 200 w/ Task Object -- //
 	t.Run("Create a Task With Valid Informations", func(t *testing.T) {
 		body := getTaskValid()
-		req, _ := http.NewRequest("POST", getBaseUrl(boardId), bytes.NewReader(body))
+		req, _ := http.NewRequest("POST", getBaseUrl(boardId, listId), bytes.NewReader(body))
 
 		// Execute Request and retrieve response
 		response := utils.ExecuteRequest(req)
@@ -136,6 +169,8 @@ func TestCreateTaskEndpoint(t *testing.T) {
 		// Assert that reponse points == created task points
 		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__TASK_POINTS)
 
+		utils.AssertBoolEqualsTo(t, responseTask.Status, false)
+
 		// Save created taskId for later tests
 		testedTaskId = responseTask.TaskId
 	})
@@ -143,7 +178,7 @@ func TestCreateTaskEndpoint(t *testing.T) {
 	// -- Test to create a task with invalid body (invalid points type) -> Should NOT Create task -> Return 400 w/ Msg/Code object -- //
 	t.Run("Create a Task With Invalid Points type", func(t *testing.T) {
 		body := getTaskInvalidPointType()
-		req, _ := http.NewRequest("POST", getBaseUrl(boardId), bytes.NewReader(body))
+		req, _ := http.NewRequest("POST", getBaseUrl(boardId, listId), bytes.NewReader(body))
 
 		// Execute Request and retrieve response
 		response := utils.ExecuteRequest(req)
@@ -154,7 +189,7 @@ func TestCreateTaskEndpoint(t *testing.T) {
 	// -- Test to create a task with invalid body (missing/empty entries) -> Return 400 w/ Msg/Code object -- //
 	t.Run("Create a Task with Missing Informations", func(t *testing.T) {
 		body := getTaskInvalidMissingInformations()
-		req, _ := http.NewRequest("POST", getBaseUrl(boardId), bytes.NewReader(body))
+		req, _ := http.NewRequest("POST", getBaseUrl(boardId, listId), bytes.NewReader(body))
 
 		// Execute Request and retrieve response
 		response := utils.ExecuteRequest(req)
@@ -167,7 +202,7 @@ func TestCreateTaskEndpoint(t *testing.T) {
 
 	t.Run("Create a task with Too Long title", func(t *testing.T) {
 		body := getTaskInvalidTooLongTitle()
-		req, _ := http.NewRequest("POST", getBaseUrl(boardId), bytes.NewReader(body))
+		req, _ := http.NewRequest("POST", getBaseUrl(boardId, listId), bytes.NewReader(body))
 
 		response := utils.ExecuteRequest(req)
 
@@ -184,7 +219,7 @@ func TestViewTaskEndpoint(t *testing.T) {
 	t.Run("View existing task with valid object id", func(t *testing.T) {
 		//taskId := utils.TaskCreate(getTaskValid(), t)
 		// TODO: change URL, add "/" to every url
-		taskUrl := fmt.Sprintf("%s/%s", getBaseUrl(boardId), testedTaskId.Hex())
+		taskUrl := fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), testedTaskId.Hex())
 
 		req, _ := http.NewRequest("GET", taskUrl, nil)
 
@@ -206,7 +241,7 @@ func TestViewTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("View non existing task with valid object id", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, bson.NewObjectId())
+		taskUrl := getTaskUrl(boardId, listId, bson.NewObjectId())
 		req, _ := http.NewRequest("GET", taskUrl, nil)
 
 		response := utils.ExecuteRequest(req)
@@ -217,9 +252,100 @@ func TestViewTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("view task with invalid object id", func(t *testing.T) {
-		taskUrl := getInvalidTaskUrl(boardId)
+		taskUrl := getInvalidTaskUrl(boardId, listId)
 
 		req, _ := http.NewRequest("GET", taskUrl, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+}
+
+func TestUpdateTaskEndpoint(t *testing.T) {
+	log.Print("Logging Task Update")
+	t.Run("Update Task with valid informations (title, status, points) - on existing task", func(t *testing.T) {
+		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		body := getTaskUpdateValidNoDescription()
+
+		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusOK)
+
+		var responseTask models.Task
+
+		err := json.Unmarshal(response.Body.Bytes(), &responseTask)
+		if err != nil {
+			t.Error("[ERR] Could not Unmarshal JSON Response, Invalid Format")
+		}
+
+		// Check that fields are updated (and description is the same as before) in Task Response
+		utils.AssertBoolEqualsTo(t, responseTask.Status, TESTING__UPDATED_STATUS)
+		utils.AssertStringEqualsTo(t, responseTask.Title, TESTING__UPDATED_TITLE)
+		utils.AssertStringEqualsTo(t, responseTask.Description, TESTING__TASK_DESCRIPTION)
+		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__UPDATED_POINTS)
+	})
+
+	t.Run("Update Task - only description with valid request", func(t *testing.T) {
+		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		body := getTaskUpdateValidDescription()
+
+		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusOK)
+
+		var responseTask models.Task
+
+		err := json.Unmarshal(response.Body.Bytes(), &responseTask)
+		if err != nil {
+			t.Error("[ERR] Could not Unmarshal JSON Response, Invalid Format")
+		}
+
+		// Check that fields are updated (and description is the same as before) in Task Response
+		utils.AssertBoolEqualsTo(t, responseTask.Status, TESTING__UPDATED_STATUS)
+		utils.AssertStringEqualsTo(t, responseTask.Title, TESTING__UPDATED_TITLE)
+		utils.AssertStringEqualsTo(t, responseTask.Description, TESTING__UPDATED_DESCRIPTION)
+		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__UPDATED_POINTS)
+	})
+
+	t.Run("Update existing task with invalid points (negative)", func(t *testing.T) {
+		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		body := getTaskUpdateInvalidPoints()
+
+		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("Update existing task with empty title", func(t *testing.T) {
+		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		body := getTaskUpdateInvalidTitle()
+
+		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		response := utils.ExecuteRequest(req)
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("Update non-existing task", func(t *testing.T) {
+		taskUrl := getTaskUrl(boardId, listId, bson.NewObjectId())
+		body := getTaskUpdateValidNoDescription()
+
+		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusNotFound)
+	})
+
+	t.Run("Update non-valid task ID", func(t *testing.T) {
+		taskUrl := getInvalidTaskUrl(boardId, listId)
+		body := getTaskUpdateValidNoDescription()
+
+		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
 		response := utils.ExecuteRequest(req)
 
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
@@ -229,7 +355,7 @@ func TestViewTaskEndpoint(t *testing.T) {
 func TestDeleteTaskEndpoint(t *testing.T) {
 	// Delete existing Resource with valid Object Id
 	t.Run("Delete Existing Task with Valid ObjectId", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
 
 		req, _ := http.NewRequest("DELETE", taskUrl, nil)
 		response := utils.ExecuteRequest(req)
@@ -244,11 +370,11 @@ func TestDeleteTaskEndpoint(t *testing.T) {
 		}
 
 		utils.AssertMapHasKey(t, m, "taskId")
-		utils.AssertStringEqualsTo(t, m["title"].(string), TESTING__TASK_TITLE)
+		utils.AssertStringEqualsTo(t, m["title"].(string), TESTING__UPDATED_TITLE)
 	})
 
 	t.Run("Delete nonexisting Task with Valid ObjectId", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
 
 		req, _ := http.NewRequest("DELETE", taskUrl, nil)
 		response := utils.ExecuteRequest(req)
@@ -257,7 +383,7 @@ func TestDeleteTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("Delete Task with invalid ObjectId", func(t *testing.T) {
-		taskUrl := getInvalidTaskUrl(boardId)
+		taskUrl := getInvalidTaskUrl(boardId, listId)
 
 		req, _ := http.NewRequest("DELETE", taskUrl, nil)
 		response := utils.ExecuteRequest(req)
