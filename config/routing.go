@@ -14,7 +14,7 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/health/", routes.HealthIndexHandler).Methods("GET")
 
 	// ---- Tasks Management Endpoints ---- //
-	taskRouter := a.Router.PathPrefix("/boards/{boardId}/tasks").Subrouter()
+	taskRouter := a.Router.PathPrefix("/boards/{boardId}/lists/{listId}/tasks").Subrouter()
 
 	tasks.InitRoutes(taskRouter)
 }
