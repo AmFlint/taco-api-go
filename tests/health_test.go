@@ -4,7 +4,12 @@ import (
 	"testing"
 	"net/http"
 	"github.com/AmFlint/taco-api-go/tests/utils"
+	"github.com/AmFlint/taco-api-go/tests/utils/testconfig"
 )
+
+func TestMain(m *testing.M) {
+	testconfig.Init(m)
+}
 
 // Test that Health Check endpoint on "/health" returns a healthy response
 func TestHealthCheck(t *testing.T) {
