@@ -11,7 +11,7 @@ type TaskDAO struct {
 }
 
 const (
-	COLLECTION = "tasks"
+	TaskCollection = "tasks"
 )
 
 // Create a TaskDAO structure and set DAO's database, return new struct
@@ -23,8 +23,8 @@ func NewTaskDAO(db *mgo.Database) TaskDAO {
 }
 
 // Prepare base queries by Initiating connection to the Collection
-func prepareQuery(db *mgo.Database) *mgo.Collection {
-	return db.C(COLLECTION)
+func prepareQuery(db *mgo.Database, collection string) *mgo.Collection {
+	return db.C(collection)
 }
 
 func (t *TaskDAO) SetDb(db *mgo.Database) {
@@ -34,36 +34,36 @@ func (t *TaskDAO) SetDb(db *mgo.Database) {
 // Find All tasks from Database
 func (t *TaskDAO) FindAll() ([]models.Task, error) {
 	var tasks []models.Task
-	err := prepareQuery(t.Database).Find(bson.M{}).All(&tasks)
+	err := prepareQuery(t.Database, TaskCollection).Find(bson.M{}).All(&tasks)
 	return  tasks, err
 }
 
 func (t *TaskDAO) FindById(taskId bson.ObjectId) (models.Task, error) {
 	var task models.Task
-	err := prepareQuery(t.Database).FindId(taskId).One(&task)
+	err := prepareQuery(t.Database, TaskCollection).FindId(taskId).One(&task)
 
 	return task, err
 }
 
 func (t *TaskDAO) Delete(task *models.Task) error {
-	err := prepareQuery(t.Database).Remove(&task)
+	err := prepareQuery(t.Database, TaskCollection).Remove(&task)
 	return err
 }
 
 func (t *TaskDAO) Update(task *models.Task) error {
-	err := prepareQuery(t.Database).UpdateId(task.TaskId, &task)
+	err := prepareQuery(t.Database, TaskCollection).UpdateId(task.TaskId, &task)
 	return err
 }
 
 func (t *TaskDAO) Insert(task *models.Task) error {
-	err := prepareQuery(t.Database).Insert(&task)
+	err := prepareQuery(t.Database, TaskCollection).Insert(&task)
 	return err
 }
 
 // Find a Task by ID, if error return empty task with error, then delete task and return deleted task + error
 func (t *TaskDAO) FindByIdAndDelete(taskId bson.ObjectId) (models.Task, error) {
 	var task models.Task
-	err := prepareQuery(t.Database).FindId(taskId).One(&task)
+	err := prepareQuery(t.Database, TaskCollection).FindId(taskId).One(&task)
 
 	if err != nil {
 		return task, err

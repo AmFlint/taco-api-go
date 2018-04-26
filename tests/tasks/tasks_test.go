@@ -1,4 +1,4 @@
-package tests
+package tasks
 
 import (
 	"testing"
@@ -11,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"fmt"
 	"log"
+	"github.com/AmFlint/taco-api-go/tests/utils/testconfig"
 )
 
 /* -----------------------------------------------------------------
@@ -137,6 +138,10 @@ var (
 func init() {
 	boardId = bson.NewObjectId()
 	listId = bson.NewObjectId()
+}
+
+func TestMain(m *testing.M) {
+	testconfig.Init(m)
 }
 
 /* --------------------------------
