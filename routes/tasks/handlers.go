@@ -80,6 +80,7 @@ func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := taskDAO.Insert(&task); err != nil {
 		helpers.RespondWithError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
 	}
 	helpers.RespondWithJson(w, http.StatusCreated, task)
 }
