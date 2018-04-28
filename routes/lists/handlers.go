@@ -1,15 +1,20 @@
 package lists
 
-
 import (
-	"net/http"
-	"github.com/AmFlint/taco-api-go/models"
 	"encoding/json"
-	"github.com/AmFlint/taco-api-go/helpers"
+	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"github.com/AmFlint/taco-api-go/config/database"
+	"github.com/AmFlint/taco-api-go/constants"
 	"github.com/AmFlint/taco-api-go/dao"
-	validator2 "gopkg.in/validator.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/AmFlint/taco-api-go/helpers"
+	"github.com/AmFlint/taco-api-go/helpers/logger"
+	"github.com/AmFlint/taco-api-go/models"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
+	validator2 "gopkg.in/validator.v2"
 )
 
 //TODO: Create Middleware for initiating TaskDAO
@@ -19,13 +24,12 @@ import (
 var listLogger *log.Entry
 
 func init() {
-	listLogger = log.WithFields(log.Fields{
-		"resource": "lists",
-	})
+	listLogger = log.WithField(constants.HandlerKeyLogger, constants.ResourceListsLogger)
 }
 
+// ListCreateHandler -> Handler for List Creation Endpoint ---- //
 func ListCreateHandler(w http.ResponseWriter, r *http.Request) {
-	handlerLogger := listLogger.WithFields(log.Fields{"handler": "Create"})
+	handlerLogger := logger.GenerateLogger(constants.HandlerCreateLogger, r.URL.Path, r.Method)
 	list := models.NewList()
 
 	decoder := json.NewDecoder(r.Body)
@@ -53,4 +57,39 @@ func ListCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.RespondWithJson(w, http.StatusCreated, list)
+}
+
+// ListDeleteHandler -> Handler for List Deletion Endpoint
+func ListDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	handlerLogger := logger.GenerateLogger(constants.HandlerDeleteLogger, r.URL.Path, r.Method)
+
+	vars := mux.Vars(r)
+	listIDVars := vars["listId"]
+
+	if isObjectID := bson.IsObjectIdHex(listIDVars); !isObjectID {
+		handlerLogger.Warn("User provided invalid Object ID for parmeters listId")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Invalid ObjectID")
+		return
+	}
+
+	listID := bson.ObjectIdHex(listIDVars)
+
+	listDAO := dao.NewListDao()
+	taskDAO := dao.NewTaskDAO(database.GetDatabaseConnection())
+
+	list, err := listDAO.FindByIDAndDelete(listID)
+	if err != nil {
+		handlerLogger.Warnf("List not found with id: %s", listIDVars)
+		helpers.RespondWithError(w, http.StatusNotFound, "List not found")
+		return
+	}
+
+	if err := taskDAO.DeleteFromListID(listID); err != nil {
+		// TODO: Check whether to respond now or ignore as list is already deleted, or better: Use a transaction
+		handlerLogger.Error("Could not delete tasks from database")
+		//helpers.RespondWithError(w, http.StatusInternalServerError, "Could remove tasks attached to given list")
+		//return
+	}
+
+	helpers.RespondWithJson(w, http.StatusOK, list)
 }
