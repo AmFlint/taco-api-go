@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"gopkg.in/mgo.v2"
 	"github.com/AmFlint/taco-api-go/models"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -35,7 +35,7 @@ func (t *TaskDAO) SetDb(db *mgo.Database) {
 func (t *TaskDAO) FindAll() ([]models.Task, error) {
 	var tasks []models.Task
 	err := prepareQuery(t.Database, TaskCollection).Find(bson.M{}).All(&tasks)
-	return  tasks, err
+	return tasks, err
 }
 
 func (t *TaskDAO) FindById(taskId bson.ObjectId) (models.Task, error) {
@@ -71,4 +71,9 @@ func (t *TaskDAO) FindByIdAndDelete(taskId bson.ObjectId) (models.Task, error) {
 	err = t.Delete(&task)
 	// Return deleted task and Error
 	return task, err
+}
+
+// DeleteFromListID deletes all tasks which are attached to given listId
+func (t *TaskDAO) DeleteFromListID(listID bson.ObjectId) error {
+	return prepareQuery(t.Database, TaskCollection).Remove(bson.M{"listId": listID})
 }
