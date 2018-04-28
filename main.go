@@ -4,7 +4,15 @@ import (
 	"fmt"
 	"github.com/AmFlint/taco-api-go/helpers"
 	"github.com/AmFlint/taco-api-go/config"
+	"github.com/sirupsen/logrus"
+	"os"
 )
+
+func init() {
+	// Setting-up logger
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetOutput(os.Stdout)
+}
 
 // Application entry point, create Application Configuration with Environment Variables, generate Router + DB connection
 // And serve the application
