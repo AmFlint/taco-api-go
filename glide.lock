@@ -1,5 +1,5 @@
-hash: 96cfbeff4c839876e4d57a1a8e8dff5ffa146fdd69639ce1ea589d0db8ab2b39
-updated: 2018-04-23T10:14:48.621302+02:00
+hash: 2a665f4fa351fe0489920095903fe29e186ff1b1831e7ebaeb0d84cba8a9f817
+updated: 2018-04-28T17:35:10.505334+02:00
 imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
@@ -7,6 +7,17 @@ imports:
   version: 90663712d74cb411cbef281bc1e08c19d1a76145
 - name: github.com/gorilla/mux
   version: 53c1911da2b537f792e7cafcb446b05ffe33b996
+- name: github.com/sirupsen/logrus
+  version: c155da19408a8799da419ed3eeb0cb5db0ad5dbc
+- name: golang.org/x/crypto
+  version: b49d69b5da943f7ef3c9cf91c8777c1f78a0cc3c
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: cbbc999da32df943dac6cd71eb3ee39e1d7838b9
+  subpackages:
+  - unix
+  - windows
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:

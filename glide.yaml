@@ -4,3 +4,8 @@ import:
   version: v1.6.1
 - package: gopkg.in/mgo.v2
 - package: gopkg.in/validator.v2
+- package: github.com/sirupsen/logrus
+  version: v1.0.5
+- package: golang.org/x/crypto
+  subpackages:
+  - ssh/terminal
