@@ -29,15 +29,15 @@ type taskInvalidPointsType struct {
 
 const (
 	// Testing data constants
-	INVALID__TASK_TITLE = "Invalid task title"
-	INVALID__TASK_DESCRIPTION = "Invalid task description"
-	TESTING__TASK_TITLE = "Testing title"
-	TESTING__TASK_DESCRIPTION = "Testing description"
-	TESTING__TASK_POINTS = 9
-	TESTING__UPDATED_TITLE = "Updating tested task title"
-	TESTING__UPDATED_DESCRIPTION = "Updated tested task description"
-	TESTING__UPDATED_STATUS = true
-	TESTING__UPDATED_POINTS = 20
+	invalidTaskTitle = "Invalid task title"
+	invalidTaskDescription = "Invalid task description"
+	testingTaskTitle = "Testing title"
+	testingTaskDescription = "Testing description"
+	testingTaskPoints = 9
+	testingUpdatedTitle = "Updating tested task title"
+	testingUpdatedDescription = "Updated tested task description"
+	testingUpdatedStatus = true
+	testingUpdatedPoints = 20
 
 	// ---- Data Generation properties ---- //
 	// Update endpoint
@@ -54,14 +54,17 @@ const (
 	genTaskForViewPoints = 5
 )
 
+// get Base URL for Tasks endpoints
 func getBaseUrl(boardId bson.ObjectId, listId bson.ObjectId) string {
 	return fmt.Sprintf("/boards/%s/lists/%s/tasks", boardId.Hex(), listId.Hex())
 }
 
+// Get Task URL for View/delete/update endpoints
 func getTaskUrl(boardId, listId, taskId bson.ObjectId) string {
 	return fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), taskId.Hex())
 }
 
+// Get and invalid URL (bad format) for task endpoints
 func getInvalidTaskUrl(boardId, listId bson.ObjectId) string {
 	return fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), "0")
 }
@@ -105,8 +108,8 @@ func getTaskForView() *models.Task {
 // -- Get Json encoded (stringified) Struct for invalid task -> Wrong Points entry -- //
 func getTaskInvalidPointType() []byte {
 	task := taskInvalidPointsType{
-		Title: INVALID__TASK_TITLE,
-		Description: INVALID__TASK_DESCRIPTION,
+		Title: invalidTaskTitle,
+		Description: invalidTaskDescription,
 		Points: false,
 	}
 	return helpers.JsonEncode(task)
@@ -133,25 +136,25 @@ func getTaskInvalidTooLongTitle() []byte {
 // -- Get Json encoded (stringified) Struct for Valid Task -- //
 func getTaskValid() []byte {
 	task := models.Task{
-		Title: TESTING__TASK_TITLE,
-		Description: TESTING__TASK_DESCRIPTION,
-		Points: TESTING__TASK_POINTS,
+		Title: testingTaskTitle,
+		Description: testingTaskDescription,
+		Points: testingTaskPoints,
 	}
 	return helpers.JsonEncode(task)
 }
 
-//
+// Get a json encoded Task with no description
 func getTaskUpdateValidNoDescription() []byte {
 	task := make(map[string]interface{})
-	task["title"] = TESTING__UPDATED_TITLE
-	task["status"] = TESTING__UPDATED_STATUS
-	task["points"] = TESTING__UPDATED_POINTS
+	task["title"] = testingUpdatedTitle
+	task["status"] = testingUpdatedStatus
+	task["points"] = testingUpdatedPoints
 	return helpers.JsonEncode(task)
 }
 
 func getTaskUpdateValidDescription() []byte {
 	task := make(map[string]interface{})
-	task["description"] = TESTING__UPDATED_DESCRIPTION
+	task["description"] = testingUpdatedDescription
 	return helpers.JsonEncode(task)
 }
 
@@ -220,11 +223,11 @@ func TestCreateTaskEndpoint(t *testing.T) {
 		}
 
 		// Assert that Response task's title == created task title
-		utils.AssertStringEqualsTo(t, responseTask.Title, TESTING__TASK_TITLE)
+		utils.AssertStringEqualsTo(t, responseTask.Title, testingTaskTitle)
 		// Assert that Response task's description == created task description
-		utils.AssertStringEqualsTo(t, responseTask.Description, TESTING__TASK_DESCRIPTION)
+		utils.AssertStringEqualsTo(t, responseTask.Description, testingTaskDescription)
 		// Assert that reponse points == created task points
-		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__TASK_POINTS)
+		utils.AssertFloatEqualsTo(t, responseTask.Points, testingTaskPoints)
 
 		utils.AssertBoolEqualsTo(t, responseTask.Status, false)
 
@@ -344,10 +347,10 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		}
 
 		// Check that fields are updated (and description is the same as before) in Task Response
-		utils.AssertBoolEqualsTo(t, responseTask.Status, TESTING__UPDATED_STATUS)
-		utils.AssertStringEqualsTo(t, responseTask.Title, TESTING__UPDATED_TITLE)
+		utils.AssertBoolEqualsTo(t, responseTask.Status, testingUpdatedStatus)
+		utils.AssertStringEqualsTo(t, responseTask.Title, testingUpdatedTitle)
 		utils.AssertStringEqualsTo(t, responseTask.Description, genTaskForUpdateDescription)
-		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__UPDATED_POINTS)
+		utils.AssertFloatEqualsTo(t, responseTask.Points, testingUpdatedPoints)
 	})
 
 	t.Run("Update Task - only description with valid request", func(t *testing.T) {
@@ -368,10 +371,10 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		}
 
 		// Check that fields are updated (and description is the same as before) in Task Response
-		utils.AssertBoolEqualsTo(t, responseTask.Status, TESTING__UPDATED_STATUS)
-		utils.AssertStringEqualsTo(t, responseTask.Title, TESTING__UPDATED_TITLE)
-		utils.AssertStringEqualsTo(t, responseTask.Description, TESTING__UPDATED_DESCRIPTION)
-		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__UPDATED_POINTS)
+		utils.AssertBoolEqualsTo(t, responseTask.Status, testingUpdatedStatus)
+		utils.AssertStringEqualsTo(t, responseTask.Title, testingUpdatedTitle)
+		utils.AssertStringEqualsTo(t, responseTask.Description, testingUpdatedDescription)
+		utils.AssertFloatEqualsTo(t, responseTask.Points, testingUpdatedPoints)
 	})
 
 	t.Run("Update existing task with invalid points (negative)", func(t *testing.T) {
