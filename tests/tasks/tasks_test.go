@@ -19,14 +19,6 @@ import (
    ----------------------- Configuration ---------------------------
    ----------------------------------------------------------------- */
 
-// -- Structure for Invalid Tasks due to invalid type for Points entry -- //
-type taskInvalidPointsType struct {
-	Title       string `bson:"title" json:"title"`
-	Description string `bson:"description" json:"description"`
-	Status      string `bson:"status" json:"status"`
-	Points      bool `bson:"points" json:"points"`
-}
-
 const (
 	// Testing data constants
 	invalidTaskTitle = "Invalid task title"
@@ -107,11 +99,10 @@ func getTaskForView() *models.Task {
 
 // -- Get Json encoded (stringified) Struct for invalid task -> Wrong Points entry -- //
 func getTaskInvalidPointType() []byte {
-	task := taskInvalidPointsType{
-		Title: invalidTaskTitle,
-		Description: invalidTaskDescription,
-		Points: false,
-	}
+	task := make(map[string]interface{})
+	task["title"] = invalidTaskTitle
+	task["description"] = invalidTaskDescription
+	task["points"] = false
 	return helpers.JsonEncode(task)
 }
 
@@ -333,7 +324,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateValidNoDescription()
 
-		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(body))
 
 		response := utils.ExecuteRequest(req)
 
@@ -357,7 +348,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateValidDescription()
 
-		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(body))
 
 		response := utils.ExecuteRequest(req)
 
@@ -381,7 +372,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateInvalidPoints()
 
-		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(body))
 
 		response := utils.ExecuteRequest(req)
 
@@ -392,7 +383,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateInvalidTitle()
 
-		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(body))
 		response := utils.ExecuteRequest(req)
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
 	})
@@ -401,7 +392,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		taskUrl := getTaskUrl(boardId, listId, bson.NewObjectId())
 		body := getTaskUpdateValidNoDescription()
 
-		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(body))
 		response := utils.ExecuteRequest(req)
 
 		utils.CheckResponseCode(t, response.Code, http.StatusNotFound)
@@ -411,7 +402,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		taskUrl := getInvalidTaskUrl(boardId, listId)
 		body := getTaskUpdateValidNoDescription()
 
-		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(body))
 		response := utils.ExecuteRequest(req)
 
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
