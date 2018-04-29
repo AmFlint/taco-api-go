@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"github.com/AmFlint/taco-api-go/tests/utils/testconfig"
+	"github.com/AmFlint/taco-api-go/tests/utils/generator"
 )
 
 /* -----------------------------------------------------------------
@@ -27,6 +28,7 @@ type taskInvalidPointsType struct {
 }
 
 const (
+	// Testing data constants
 	INVALID__TASK_TITLE = "Invalid task title"
 	INVALID__TASK_DESCRIPTION = "Invalid task description"
 	TESTING__TASK_TITLE = "Testing title"
@@ -36,6 +38,20 @@ const (
 	TESTING__UPDATED_DESCRIPTION = "Updated tested task description"
 	TESTING__UPDATED_STATUS = true
 	TESTING__UPDATED_POINTS = 20
+
+	// ---- Data Generation properties ---- //
+	// Update endpoint
+	genTaskForUpdateTitle = "About to be updated title"
+	genTaskForUpdateDescription = "About to be updated description"
+	genTaskForUpdatePoints = 6
+	// Delete endpoint
+	genTaskForDeleteTitle = "About to be deleted title"
+	genTaskForDeleteDescription = "About to be deleted description"
+	genTaskForDeletePoints = 15
+	// View endpoint
+	genTaskForViewTitle = "About to be viewed title"
+	genTaskForViewDescription = "About to be viewed description"
+	genTaskForViewPoints = 5
 )
 
 func getBaseUrl(boardId bson.ObjectId, listId bson.ObjectId) string {
@@ -49,6 +65,42 @@ func getTaskUrl(boardId, listId, taskId bson.ObjectId) string {
 func getInvalidTaskUrl(boardId, listId bson.ObjectId) string {
 	return fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), "0")
 }
+
+/* ------------------------------------------
+   ----------- Task Generation Data ------------
+   ------------------------------------------ */
+
+// Get Task Entity for Update endpoint
+func getTaskForUpdate() *models.Task {
+	return &models.Task{
+		Title: genTaskForUpdateTitle,
+		Description: genTaskForUpdateDescription,
+		Points: genTaskForUpdatePoints,
+	}
+}
+
+// Get Task Entity for Delete Endpoint
+func getTaskForDelete() *models.Task {
+	return &models.Task{
+		Title: genTaskForDeleteTitle,
+		Description: genTaskForDeleteDescription,
+		Points: genTaskForDeletePoints,
+	}
+}
+
+// Get Task Entity for View Endpoint
+func getTaskForView() *models.Task {
+	return &models.Task{
+		Title: genTaskForViewTitle,
+		Description: genTaskForViewDescription,
+		Points: genTaskForViewPoints,
+	}
+}
+
+
+/* ------------------------------------------
+   ----------- Task Testing Data ------------
+   ------------------------------------------ */
 
 // -- Get Json encoded (stringified) Struct for invalid task -> Wrong Points entry -- //
 func getTaskInvalidPointType() []byte {
@@ -220,11 +272,13 @@ func TestCreateTaskEndpoint(t *testing.T) {
    -------------------------------- */
 
 func TestViewTaskEndpoint(t *testing.T) {
+	// Generate Task to test
+	testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForView())
+
 	// Testing view existing Task with Valid ObjectID
 	t.Run("View existing task with valid object id", func(t *testing.T) {
 		//taskId := utils.TaskCreate(getTaskValid(), t)
-		// TODO: change URL, add "/" to every url
-		taskUrl := fmt.Sprintf("%s/%s", getBaseUrl(boardId, listId), testedTaskId.Hex())
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 
 		req, _ := http.NewRequest("GET", taskUrl, nil)
 
@@ -241,8 +295,8 @@ func TestViewTaskEndpoint(t *testing.T) {
 		}
 
 		// Assert retrieved Task has same title as the one created above, and check they have the same TaskId
-		utils.AssertStringEqualsTo(t, task.Title, TESTING__TASK_TITLE)
-		utils.AssertStringEqualsTo(t, task.TaskId.Hex(), testedTaskId.Hex())
+		utils.AssertStringEqualsTo(t, task.Title, genTaskForViewTitle)
+		utils.AssertStringEqualsTo(t, task.TaskId.Hex(), testedTaskID.Hex())
 	})
 
 	t.Run("View non existing task with valid object id", func(t *testing.T) {
@@ -268,8 +322,12 @@ func TestViewTaskEndpoint(t *testing.T) {
 
 func TestUpdateTaskEndpoint(t *testing.T) {
 	log.Print("Logging Task Update")
+	// Generating Task To test≤
+	testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
+
+
 	t.Run("Update Task with valid informations (title, status, points) - on existing task", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateValidNoDescription()
 
 		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
@@ -288,12 +346,12 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		// Check that fields are updated (and description is the same as before) in Task Response
 		utils.AssertBoolEqualsTo(t, responseTask.Status, TESTING__UPDATED_STATUS)
 		utils.AssertStringEqualsTo(t, responseTask.Title, TESTING__UPDATED_TITLE)
-		utils.AssertStringEqualsTo(t, responseTask.Description, TESTING__TASK_DESCRIPTION)
+		utils.AssertStringEqualsTo(t, responseTask.Description, genTaskForUpdateDescription)
 		utils.AssertFloatEqualsTo(t, responseTask.Points, TESTING__UPDATED_POINTS)
 	})
 
 	t.Run("Update Task - only description with valid request", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateValidDescription()
 
 		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
@@ -317,7 +375,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("Update existing task with invalid points (negative)", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateInvalidPoints()
 
 		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
@@ -328,7 +386,7 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("Update existing task with empty title", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateInvalidTitle()
 
 		req, _ := http.NewRequest("PUT", taskUrl, bytes.NewReader(body))
@@ -358,9 +416,12 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 }
 
 func TestDeleteTaskEndpoint(t *testing.T) {
+	// Generating Task To test
+	testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForDelete())
+
 	// Delete existing Resource with valid Object Id
 	t.Run("Delete Existing Task with Valid ObjectId", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 
 		req, _ := http.NewRequest("DELETE", taskUrl, nil)
 		response := utils.ExecuteRequest(req)
@@ -375,11 +436,13 @@ func TestDeleteTaskEndpoint(t *testing.T) {
 		}
 
 		utils.AssertMapHasKey(t, m, "taskId")
-		utils.AssertStringEqualsTo(t, m["title"].(string), TESTING__UPDATED_TITLE)
+		utils.AssertStringEqualsTo(t, m["title"].(string), genTaskForDeleteTitle)
+		utils.AssertStringEqualsTo(t, m["description"].(string), genTaskForDeleteDescription)
+		utils.AssertFloatEqualsTo(t, m["points"].(float64), genTaskForDeletePoints)
 	})
 
 	t.Run("Delete nonexisting Task with Valid ObjectId", func(t *testing.T) {
-		taskUrl := getTaskUrl(boardId, listId, testedTaskId)
+		taskUrl := getTaskUrl(boardId, listId, bson.NewObjectId())
 
 		req, _ := http.NewRequest("DELETE", taskUrl, nil)
 		response := utils.ExecuteRequest(req)
