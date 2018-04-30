@@ -34,8 +34,10 @@ func (l *ListDAO) Delete(list *models.List) error {
 }
 
 // FindByID -> Find a List by its id
-func (l *ListDAO) findByID() {
-
+func (l *ListDAO) FindByID(listID bson.ObjectId) (models.List, error) {
+	var list models.List
+	err := prepareQuery(l.Database, ListCollection).FindId(listID).One(&list)
+	return list, err
 }
 
 // Insert a list to the database
