@@ -178,7 +178,7 @@ func checkResponseCodeAndErrorMessage(t *testing.T, code int, body []byte) {
    ----------------------------------------------------------------- */
 
 var (
-	testedTaskId, boardId, listId bson.ObjectId
+	boardId, listId bson.ObjectId
 )
 
 func init() {
@@ -221,9 +221,6 @@ func TestCreateTaskEndpoint(t *testing.T) {
 		utils.AssertFloatEqualsTo(t, responseTask.Points, testingTaskPoints)
 
 		utils.AssertBoolEqualsTo(t, responseTask.Status, false)
-
-		// Save created taskId for later tests
-		testedTaskId = responseTask.TaskId
 	})
 
 	// -- Test to create a task with invalid body (invalid points type) -> Should NOT Create task -> Return 400 w/ Msg/Code object -- //
