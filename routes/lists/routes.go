@@ -12,4 +12,7 @@ func InitRoutes(listRouter *mux.Router) {
 	// ---- List Deletion ---- //
 	listRouter.HandleFunc("/{listId}", ListDeleteHandler).Methods("DELETE")
 	listRouter.HandleFunc("/{listId}/", ListDeleteHandler).Methods("DELETE")
+	// ---- List View ---- //
+	listRouter.HandleFunc("/{listId}", ListViewHandler).Methods("GET")
+	listRouter.HandleFunc("/{listId}/", ListViewHandler).Methods("GET")
 }

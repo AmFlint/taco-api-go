@@ -93,3 +93,30 @@ func ListDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	helpers.RespondWithJson(w, http.StatusOK, list)
 }
+
+// ListViewHandler -> Handler to View List Endpoint
+func ListViewHandler(w http.ResponseWriter, r *http.Request) {
+	handlerLogger := logger.GenerateLogger(constants.HandlerViewLogger, r.URL.Path, r.Method)
+	vars := mux.Vars(r)
+	listIdVars := vars["listId"]
+
+	if isObjectId := bson.IsObjectIdHex(listIdVars); !isObjectId {
+		handlerLogger.Warn("Invalid Object ID for list")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Invalid ObjectID")
+		return
+	}
+
+	listID := bson.ObjectIdHex(listIdVars)
+	listDAO := dao.NewListDao()
+
+	list, err := listDAO.FindByID(listID)
+	// List not found
+	if err != nil {
+		handlerLogger.Warnf("List not found with id: %s", listIdVars)
+		helpers.RespondWithError(w, http.StatusNotFound, "List not found")
+		return
+	}
+
+	helpers.RespondWithJson(w, http.StatusOK, list)
+	return
+}
