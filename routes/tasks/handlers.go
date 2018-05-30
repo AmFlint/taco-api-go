@@ -10,7 +10,6 @@ import (
 	"github.com/AmFlint/taco-api-go/models"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gorilla/mux"
-	validator2 "gopkg.in/validator.v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/AmFlint/taco-api-go/constants"
 	"github.com/AmFlint/taco-api-go/helpers/logger"
@@ -71,6 +70,14 @@ func TaskViewHandler(w http.ResponseWriter, r *http.Request) {
 func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
 	handlerLogger := logger.GenerateLogger(constants.HandlerCreateLogger, r.URL.Path, r.Method)
 	var task models.Task
+
+	// Make sure that request body is not empty
+	if r.Body == nil {
+		handlerLogger.Warn("Empty Request body")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Empty request body")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&task); err != nil {
@@ -79,9 +86,8 @@ func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validator := validator2.NewValidator()
-	validator.SetTag("onCreate")
-	if errs := validator.Validate(task); errs != nil {
+
+	if errs := helpers.Validate(task, "onCreate"); errs != nil {
 		handlerLogger.Warnf("Validation failed on task %s, got error: %s", task, errs.Error())
 		helpers.RespondWithError(w, http.StatusBadRequest, errs.Error())
 		return
@@ -149,6 +155,13 @@ func TaskUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handlerLogger.Warnf("Task not found for id: %s", taskId.Hex())
 		helpers.RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	// Make sure that Request body is not empty
+	if r.Body == nil {
+		handlerLogger.Warn("Received empty Request body")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Empty request body")
 		return
 	}
 

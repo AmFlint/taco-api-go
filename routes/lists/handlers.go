@@ -32,6 +32,13 @@ func ListCreateHandler(w http.ResponseWriter, r *http.Request) {
 	handlerLogger := logger.GenerateLogger(constants.HandlerCreateLogger, r.URL.Path, r.Method)
 	list := models.NewList()
 
+	// Make sure that request body is not empty
+	if r.Body == nil {
+		handlerLogger.Warn("Empty Request Body")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Empty Request Body")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&list); err != nil {
 		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -132,6 +139,7 @@ func ListUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if isObjectId := bson.IsObjectIdHex(listIdVars); !isObjectId {
 		handlerLogger.Warn("Invalid Object ID for list")
 		helpers.RespondWithError(w, http.StatusBadRequest, "Invalid ObjectID")
+		return
 	}
 
 	listID := bson.ObjectIdHex(listIdVars)
@@ -142,6 +150,13 @@ func ListUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handlerLogger.Warnf("List not found with id: %s", listIdVars)
 		helpers.RespondWithError(w, http.StatusNotFound, "List not found")
+		return
+	}
+
+	// Make sure that request body is not empty
+	if r.Body == nil {
+		handlerLogger.Warn("Received Empty request body")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Empty body")
 		return
 	}
 

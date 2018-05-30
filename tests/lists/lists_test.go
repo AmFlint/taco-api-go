@@ -140,6 +140,13 @@ func TestCreateListEndpoint(t *testing.T) {
 		response := utils.ExecuteRequest(req)
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
 	})
+
+	t.Run("Create List with empty request body", func(t *testing.T) {
+		listURL := getListsBaseUrl(boardId)
+		req, _ := http.NewRequest("POST", listURL, nil)
+		response := utils.ExecuteRequest(req)
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
 }
 
 // ---- Test View Endpoint ---- //
@@ -263,13 +270,22 @@ func TestUpdateListHandler(t *testing.T) {
 		utils.CheckResponseCode(t, response.Code, http.StatusNotFound)
 	})
 
+	t.Run("Update list with empty request body", func(t *testing.T) {
+		listURL := getlistURL(boardId, testedListID)
+
+		req, _ := http.NewRequest("PATCH", listURL, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+
 	t.Run("Update list with Invalid Object ID", func(t *testing.T) {
-		//listURL := getInvalidlistURL(boardId)
-		//list := getValidListUpdate()
-		//
-		//req, _ := http.NewRequest("PATCH", listURL, bytes.NewReader(list))
-		//response := utils.ExecuteRequest(req)
-		//
-		//utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+		listURL := getInvalidlistURL(boardId)
+		list := getValidListUpdate()
+
+		req, _ := http.NewRequest("PATCH", listURL, bytes.NewReader(list))
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
 	})
 }

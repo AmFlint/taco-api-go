@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
 	"fmt"
-	"log"
 	"github.com/AmFlint/taco-api-go/tests/utils/testconfig"
 	"github.com/AmFlint/taco-api-go/tests/utils/generator"
 )
@@ -256,6 +255,14 @@ func TestCreateTaskEndpoint(t *testing.T) {
 
 		checkResponseCodeAndErrorMessage(t, response.Code, response.Body.Bytes())
 	})
+
+	t.Run("Create a Task with empty request body", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", getBaseUrl(boardId, listId), nil)
+		// Execute Request and retrieve response
+		response := utils.ExecuteRequest(req)
+		// Assert that Response code is 400/Bad Request
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
 }
 
 /* --------------------------------
@@ -312,12 +319,9 @@ func TestViewTaskEndpoint(t *testing.T) {
 }
 
 func TestUpdateTaskEndpoint(t *testing.T) {
-	log.Print("Logging Task Update")
-	// Generating Task To test≤
-	testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
-
-
 	t.Run("Update Task with valid informations (title, status, points) - on existing task", func(t *testing.T) {
+		// Generating Task To test≤
+		testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateValidNoDescription()
 
@@ -342,6 +346,8 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("Update Task - only description with valid request", func(t *testing.T) {
+		// Generating Task To test≤
+		testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateValidDescription()
 
@@ -359,13 +365,15 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 		}
 
 		// Check that fields are updated (and description is the same as before) in Task Response
-		utils.AssertBoolEqualsTo(t, responseTask.Status, testingUpdatedStatus)
-		utils.AssertStringEqualsTo(t, responseTask.Title, testingUpdatedTitle)
+		utils.AssertBoolEqualsTo(t, responseTask.Status, false)
+		utils.AssertStringEqualsTo(t, responseTask.Title, genTaskForUpdateTitle)
 		utils.AssertStringEqualsTo(t, responseTask.Description, testingUpdatedDescription)
-		utils.AssertFloatEqualsTo(t, responseTask.Points, testingUpdatedPoints)
+		utils.AssertFloatEqualsTo(t, responseTask.Points, genTaskForUpdatePoints)
 	})
 
 	t.Run("Update existing task with invalid points (negative)", func(t *testing.T) {
+		// Generating Task To test≤
+		testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateInvalidPoints()
 
@@ -377,6 +385,8 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 	})
 
 	t.Run("Update existing task with empty title", func(t *testing.T) {
+		// Generating Task To test≤
+		testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
 		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
 		body := getTaskUpdateInvalidTitle()
 
@@ -404,6 +414,16 @@ func TestUpdateTaskEndpoint(t *testing.T) {
 
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
 	})
+
+	t.Run("Update task with empty request body", func(t *testing.T) {
+		// Generating Task To test≤
+		testedTaskID := generator.GenerateTaskAndGetID(t, getTaskForUpdate())
+		taskUrl := getTaskUrl(boardId, listId, testedTaskID)
+		req, _ := http.NewRequest("PATCH", taskUrl, bytes.NewReader(nil))
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
 }
 
 func TestDeleteTaskEndpoint(t *testing.T) {
@@ -424,6 +444,10 @@ func TestDeleteTaskEndpoint(t *testing.T) {
 		err := json.Unmarshal(response.Body.Bytes(), &m)
 		if err != nil {
 			t.Fatal("Could not unMarshal response JSON")
+		}
+
+		if len(m) == 0 {
+			t.Error("Empty response for task deletion")
 		}
 
 		utils.AssertMapHasKey(t, m, "taskId")
