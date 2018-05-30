@@ -1,13 +1,16 @@
 package utils
 
 import (
-	"testing"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"testing"
+
+	"fmt"
+	"reflect"
 
 	"github.com/AmFlint/taco-api-go/config"
-	"reflect"
-	"fmt"
 )
 
 // Execute Http Request
@@ -24,6 +27,7 @@ func CheckResponseCode(t *testing.T, got, expected int) {
 		t.Errorf("Got Response Code %v, expected: %v", got, expected)
 	}
 }
+
 // TODO: Use func assertEquals in all AssertEquals methods
 func assertEquals(t *testing.T, got, expected interface{}, err string) {
 	if got != expected {
@@ -64,4 +68,20 @@ func AssertNotEmpty(t *testing.T, got interface{}) {
 	if reflect.DeepEqual(got, reflect.Zero(reflect.TypeOf(got)).Interface()) {
 		t.Errorf("[Error] Expected interface to be non-empty, but is empty")
 	}
+}
+
+// ExecuteRequestAndGetResponse - Execute HTTP Request and retrieve map of string -> interface with response
+func ExecuteRequestAndGetResponse(method, url string, body *bytes.Reader) (map[string]interface{}, error) {
+	var result map[string]interface{}
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return result, err
+	}
+
+	// Execute Request and retrieve response
+	response := ExecuteRequest(req)
+
+	// Get Response Task
+	return result, json.Unmarshal(response.Body.Bytes(), &result)
 }

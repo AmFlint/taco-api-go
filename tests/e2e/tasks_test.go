@@ -1,4 +1,4 @@
-package tasks
+package e2e
 
 import (
 	"testing"
@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
 	"fmt"
-	"github.com/AmFlint/taco-api-go/tests/utils/testconfig"
 	"github.com/AmFlint/taco-api-go/tests/utils/generator"
 )
 
@@ -183,10 +182,6 @@ var (
 func init() {
 	boardId = bson.NewObjectId()
 	listId = bson.NewObjectId()
-}
-
-func TestMain(m *testing.M) {
-	testconfig.Init(m)
 }
 
 /* --------------------------------
