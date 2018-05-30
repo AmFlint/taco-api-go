@@ -120,3 +120,62 @@ func ListViewHandler(w http.ResponseWriter, r *http.Request) {
 	helpers.RespondWithJson(w, http.StatusOK, list)
 	return
 }
+
+// ListUpdateHandler -> Handler to Update a List Endpoint
+func ListUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	var mainList models.List
+	handlerLogger := logger.GenerateLogger(constants.HandlerUpdateLogger, r.URL.Path, r.Method)
+	vars := mux.Vars(r)
+
+	listIdVars := vars["listId"]
+
+	if isObjectId := bson.IsObjectIdHex(listIdVars); !isObjectId {
+		handlerLogger.Warn("Invalid Object ID for list")
+		helpers.RespondWithError(w, http.StatusBadRequest, "Invalid ObjectID")
+	}
+
+	listID := bson.ObjectIdHex(listIdVars)
+	listDAO := dao.NewListDao()
+
+	// TODO: Create / Use method UpdateByID -> check error type for response
+	list, err := listDAO.FindByID(listID)
+	if err != nil {
+		handlerLogger.Warnf("List not found with id: %s", listIdVars)
+		helpers.RespondWithError(w, http.StatusNotFound, "List not found")
+		return
+	}
+
+	// Manage HTTP Request Body
+	// Parse request body
+	var body map[string]interface{}
+	if err := helpers.DecodeBody(r.Body, &body); err != nil {
+		handlerLogger.Warnf("Bad format for Request body, got error: %s", err.Error())
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	bodyJson := helpers.JsonEncode(body)
+	// Validate Request body types against List data structure
+	if err := json.Unmarshal(bodyJson, &mainList); err != nil {
+		handlerLogger.Fatal(err.Error())
+		helpers.RespondWithError(w, http.StatusInternalServerError, "Can not unmarshal body")
+		return
+	}
+
+	// Validate List from Request Body
+	if err := helpers.Validate(mainList, "onCreate"); err != nil {
+		handlerLogger.Warnf("Could not validate List model, received error: %s", err.Error())
+		helpers.RespondWithError(w, http.StatusBadRequest, "Could not validate given data, errors: " + err.Error())
+		return
+	}
+
+	list.HydrateFromMap(body)
+	if err := listDAO.Update(&list); err != nil {
+		handlerLogger.Warnf("Could not update list with id: %s, got error: %s", listIdVars, err.Error())
+		helpers.RespondWithError(w, http.StatusInternalServerError, "Could not reach Database")
+		return
+	}
+	handlerLogger.Infof("I fucked it all: %s", list)
+
+	helpers.RespondWithJson(w, http.StatusOK, mainList)
+}

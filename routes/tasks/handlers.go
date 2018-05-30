@@ -162,6 +162,7 @@ func TaskUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bodyJson := helpers.JsonEncode(body)
+	// Check that request body types are correct for Task Model
 	if err := json.Unmarshal(bodyJson, &task); err != nil {
 		handlerLogger.Fatal(err.Error())
 		helpers.RespondWithError(w, http.StatusInternalServerError, "Can not unmarshal body")
@@ -171,12 +172,9 @@ func TaskUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	// Hydrate Task from request's attributes
 	mainTask.HydrateFromMap(body)
 
-	validator := validator2.NewValidator()
-	validator.SetTag("onCreate")
-
-	if errs := validator.Validate(mainTask); errs != nil {
-		handlerLogger.Warnf("Validation failed for User Input, got error: %s", errs.Error())
-		helpers.RespondWithError(w, http.StatusBadRequest, errs.Error())
+	if err := helpers.Validate(mainTask, "onCreate"); err != nil {
+		handlerLogger.Warnf("Validation failed for User Input, got error: %s", err.Error())
+		helpers.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
