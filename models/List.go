@@ -15,3 +15,10 @@ func NewList() List {
 	list.Tasks = []Task{}
 	return list
 }
+
+// Hydrate a List structure from a map of string -> interface
+func (l *List) HydrateFromMap(json map[string]interface{}) {
+	if name, ok := json["name"]; ok {
+		l.Name = name.(string)
+	}
+}

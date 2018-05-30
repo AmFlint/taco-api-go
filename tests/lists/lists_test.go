@@ -18,12 +18,14 @@ import (
 const (
 	TESTING__LIST_NAME  = "Testing list"
 	TESTING__LIST_ORDER = 1
-
+	UPDATED__LIST_NAME = "Updated list"
 	// data creation
 	// delete endpoint
 	genListForDeleteName = "about to be deleted"
 	// view endpoint
 	genListForViewName = "about to be viewed"
+	// update endpoint
+	genListForUpdateName = "to be updated"
 )
 
 // TODO: Create Helpers for Resource creations -> Tests run in parrallell which means reusing an id from above test may not work
@@ -52,6 +54,12 @@ func getListForView() *models.List {
 	return &list
 }
 
+func getListForUpdate() *models.List {
+	list := models.NewList()
+	list.Name = genListForUpdateName
+	return &list
+}
+
 // Configuration for basic Lists
 
 func getValidList() []byte {
@@ -69,6 +77,12 @@ func getInvalidListEmptyTitle() []byte {
 func getInvalidListBadTitle() []byte {
 	list := make(map[string]interface{})
 	list["title"] = "testing1209"
+	return helpers.JsonEncode(list)
+}
+
+func getValidListUpdate() []byte {
+	list := make(map[string]interface{})
+	list["name"] = UPDATED__LIST_NAME
 	return helpers.JsonEncode(list)
 }
 
@@ -123,6 +137,13 @@ func TestCreateListEndpoint(t *testing.T) {
 		list := getInvalidListBadTitle()
 
 		req, _ := http.NewRequest("POST", listURL, bytes.NewReader(list))
+		response := utils.ExecuteRequest(req)
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("Create List with empty request body", func(t *testing.T) {
+		listURL := getListsBaseUrl(boardId)
+		req, _ := http.NewRequest("POST", listURL, nil)
 		response := utils.ExecuteRequest(req)
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
 	})
@@ -203,6 +224,66 @@ func TestDeleteListHandler(t *testing.T) {
 		listURL := getInvalidlistURL(boardId)
 
 		req, _ := http.NewRequest("DELETE", listURL, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+}
+
+func TestUpdateListHandler(t *testing.T) {
+	testedListID := generator.GenerateListAndGetID(t, getListForUpdate())
+
+	t.Run("Update a list with valid informations", func(t *testing.T) {
+		listURL := getlistURL(boardId, testedListID)
+		list := getValidListUpdate()
+
+		req, _ := http.NewRequest("PATCH", listURL, bytes.NewReader(list))
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusOK)
+
+		var updatedList models.List
+		if err := json.Unmarshal(response.Body.Bytes(), &updatedList); err != nil {
+			t.Error("[Error] in Update List endpoint, could not unmarshal response body")
+		}
+
+		utils.AssertStringEqualsTo(t, updatedList.Name, UPDATED__LIST_NAME)
+	})
+
+	t.Run("Update a list with invalid informations (Bad format title)", func(t *testing.T) {
+		listURL := getlistURL(boardId, testedListID)
+		list := getInvalidListBadTitle()
+
+		req, _ := http.NewRequest("PATCH", listURL, bytes.NewReader(list))
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("Update non existing List", func(t *testing.T) {
+		listURL := getlistURL(boardId, bson.NewObjectId())
+		list := getValidListUpdate()
+
+		req, _ := http.NewRequest("PATCH", listURL, bytes.NewReader(list))
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusNotFound)
+	})
+
+	t.Run("Update list with empty request body", func(t *testing.T) {
+		listURL := getlistURL(boardId, testedListID)
+
+		req, _ := http.NewRequest("PATCH", listURL, nil)
+		response := utils.ExecuteRequest(req)
+
+		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)
+	})
+
+	t.Run("Update list with Invalid Object ID", func(t *testing.T) {
+		listURL := getInvalidlistURL(boardId)
+		list := getValidListUpdate()
+
+		req, _ := http.NewRequest("PATCH", listURL, bytes.NewReader(list))
 		response := utils.ExecuteRequest(req)
 
 		utils.CheckResponseCode(t, response.Code, http.StatusBadRequest)

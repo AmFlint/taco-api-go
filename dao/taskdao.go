@@ -46,18 +46,15 @@ func (t *TaskDAO) FindById(taskId bson.ObjectId) (models.Task, error) {
 }
 
 func (t *TaskDAO) Delete(task *models.Task) error {
-	err := prepareQuery(t.Database, TaskCollection).Remove(&task)
-	return err
+	return prepareQuery(t.Database, TaskCollection).Remove(&task)
 }
 
 func (t *TaskDAO) Update(task *models.Task) error {
-	err := prepareQuery(t.Database, TaskCollection).UpdateId(task.TaskId, &task)
-	return err
+	return prepareQuery(t.Database, TaskCollection).UpdateId(task.TaskId, &task)
 }
 
 func (t *TaskDAO) Insert(task *models.Task) error {
-	err := prepareQuery(t.Database, TaskCollection).Insert(&task)
-	return err
+	return prepareQuery(t.Database, TaskCollection).Insert(&task)
 }
 
 // Find a Task by ID, if error return empty task with error, then delete task and return deleted task + error

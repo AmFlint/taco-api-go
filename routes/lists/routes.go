@@ -15,4 +15,7 @@ func InitRoutes(listRouter *mux.Router) {
 	// ---- List View ---- //
 	listRouter.HandleFunc("/{listId}", ListViewHandler).Methods("GET")
 	listRouter.HandleFunc("/{listId}/", ListViewHandler).Methods("GET")
+	// ---- List Update ---- //
+	listRouter.HandleFunc("/{listId}", ListUpdateHandler).Methods("PATCH")
+	listRouter.HandleFunc("/{listId}/", ListUpdateHandler).Methods("PATCH")
 }
