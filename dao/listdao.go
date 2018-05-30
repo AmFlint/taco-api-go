@@ -58,3 +58,8 @@ func (l *ListDAO) FindByIDAndDelete(listID bson.ObjectId) (models.List, error) {
 	// Return deleted list and Error
 	return list, err
 }
+
+// Update - Update a List Entity
+func (l *ListDAO) Update(list *models.List) error {
+	return prepareQuery(l.Database, ListCollection).UpdateId(list.ListId, list)
+}
